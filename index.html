@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Interactive Resume & Job-Match Roaster</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#2D2D2D',
+          card: '#FFFFFF',
+          line: '#E7E5E4',
+          cashmere: '#8DB600',
+          leaf: '#526900',
+          merlot: '#F4D7D0',
+          merlotLight: '#75434A',
+          mist: '#2D2D2D',
+          muted: '#6B7280'
+        },
+        fontFamily: {
+          serif: ['Inter', 'system-ui', 'sans-serif'],
+          sans: ['Inter', 'system-ui', 'sans-serif']
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  html { scroll-behavior: smooth; }
+  body {
+    background:
+      radial-gradient(ellipse at 12% 0%, rgba(244, 215, 208, .42), transparent 34rem),
+      #FFFDFB;
+    color: #2D2D2D;
+  }
+
+  .glow {
+    box-shadow: 0 1px 2px rgba(45, 45, 45, .04),
+                0 18px 48px -28px rgba(45, 45, 45, .24);
+  }
+
+  .textarea { min-height: 260px; resize: vertical; }
+
+  :focus-visible {
+    outline: 3px solid rgba(141, 182, 0, .55);
+    outline-offset: 3px;
+  }
+
+  .fade-in { animation: fade .5s ease both; }
+
+  @keyframes fade {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .ring-progress {
+    transition: stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .pill {
+    border: 1px solid;
+    border-radius: 9999px;
+    padding: .35rem .7rem;
+    font-size: .75rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+  }
+</style>
+</head>
+
+<body class="min-h-screen font-sans antialiased">
+
+<!-- Top bar -->
+<header class="sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur-xl">
+  <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
+    <div>
+      <h1 class="font-serif text-xl font-bold tracking-tight sm:text-2xl">
+        Resume <span class="text-leaf">Roaster</span>
+      </h1>
+      <p class="text-xs text-muted">ATS match, weak-verb audit & brutal rewrite formulas</p>
+    </div>
+
+    <div class="flex gap-2">
+      <button id="loadSample"
+        class="rounded-lg border border-cashmere/40 bg-cashmere/10 px-3 py-2 text-sm font-semibold text-leaf transition hover:bg-cashmere/20">
+        Load Sample Resume & JD
+      </button>
+
+      <button id="clearAll"
+        class="rounded-lg border border-line bg-card px-3 py-2 text-sm font-semibold text-muted transition hover:border-cashmere/50 hover:text-mist">
+        Clear All
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-7xl px-4 pb-24 pt-8 sm:px-6">
+
+  <section class="mb-8 max-w-3xl">
+    <span class="inline-flex items-center gap-2 rounded-full border border-cashmere/30 bg-cashmere/10 px-3 py-1 text-xs font-bold uppercase tracking-[.14em] text-leaf">
+      <span class="h-2 w-2 rounded-full bg-cashmere"></span>
+      Your career, in focus
+    </span>
+    <h2 class="mt-4 font-serif text-3xl font-bold tracking-tight sm:text-4xl">
+      Make your next move <span class="text-leaf">with confidence.</span>
+    </h2>
+    <p class="mt-3 max-w-2xl text-sm leading-6 text-muted sm:text-base">
+      Find the story your resume is missing. Compare it with a role, spot the gaps, and leave with a practical plan.
+    </p>
+  </section>
+
+  <!-- Inputs -->
+  <section class="grid gap-4 lg:grid-cols-2">
+    <div class="rounded-2xl border border-line bg-card p-4 glow sm:p-6">
+      <label for="resumeInput" class="mb-2 block font-serif text-lg font-bold">
+        Paste Resume / Portfolio Text
+      </label>
+      <textarea id="resumeInput"
+        class="textarea w-full rounded-xl border border-line bg-[#FFFDFB] p-4 text-sm leading-relaxed text-mist outline-none placeholder:text-muted/70 focus:border-cashmere"
+        placeholder="Paste your resume text here..."></textarea>
+    </div>
+
+    <div class="rounded-2xl border border-line bg-card p-4 glow sm:p-6">
+      <label for="jdInput" class="mb-2 block font-serif text-lg font-bold">
+        Paste Target Job Description
+      </label>
+      <textarea id="jdInput"
+        class="textarea w-full rounded-xl border border-line bg-[#FFFDFB] p-4 text-sm leading-relaxed text-mist outline-none placeholder:text-muted/70 focus:border-cashmere"
+        placeholder="Paste the job description here..."></textarea>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="mt-6 flex justify-center">
+    <button id="analyze"
+      class="rounded-xl bg-cashmere px-8 py-4 text-base font-extrabold text-ink shadow-lg shadow-cashmere/20 transition hover:brightness-105 active:scale-95">
+      Roast & Score My Resume 🔥
+    </button>
+  </div>
+
+  <!-- Results -->
+  <section id="results" class="mt-12 hidden">
+    <div class="fade-in rounded-2xl border border-line bg-card p-5 glow sm:p-8">
+
+      <div class="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <!-- Score ring -->
+        <div class="flex flex-col items-center rounded-2xl border border-line bg-[#FFFDFB] p-6">
+          <svg viewBox="0 0 160 160" class="h-44 w-44">
+            <circle cx="80" cy="80" r="65" fill="none" stroke="#E7E5E4" stroke-width="14" />
+            <circle id="scoreRing" cx="80" cy="80" r="65" fill="none" stroke="#8DB600"
+              stroke-width="14" stroke-linecap="round"
+              stroke-dasharray="408.4" stroke-dashoffset="408.4"
+              transform="rotate(-90 80 80)"
+              class="ring-progress" />
+            <text id="scoreText" x="80" y="76" text-anchor="middle" fill="#2D2D2D"
+              font-size="34" font-weight="800">0%</text>
+            <text x="80" y="100" text-anchor="middle" fill="#6B7280" font-size="12">
+              ATS Match
+            </text>
+          </svg>
+
+          <p id="scoreVerdict" class="mt-3 text-center text-sm text-muted"></p>
+        </div>
+
+        <!-- Keywords -->
+        <div class="space-y-5">
+          <div>
+            <h2 class="mb-2 font-serif text-lg font-bold text-leaf">Matched Keywords</h2>
+            <div id="matchedKeywords" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div>
+            <h2 class="mb-2 font-serif text-lg font-bold text-merlotLight">
+              Missing High-Priority Keywords
+            </h2>
+            <div id="missingKeywords" class="flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weak bullets -->
+      <div class="mt-8 rounded-2xl border border-merlot/50 bg-merlot/15 p-5">
+        <h2 class="font-serif text-xl font-bold text-merlotLight">
+          Brutally Honest Roast & Rewrite
+        </h2>
+        <p class="mt-1 text-sm text-muted">
+          Weak openers and bullets without measurable impact get called out first.
+        </p>
+
+        <div id="weakBullets" class="mt-4 space-y-4"></div>
+      </div>
+
+      <!-- Health check -->
+      <div class="mt-8">
+        <h2 class="font-serif text-xl font-bold">Portfolio & Structure Health Check</h2>
+        <div id="healthChecks" class="mt-4 grid gap-3 sm:grid-cols-2"></div>
+      </div>
+
+      <!-- Export -->
+      <div class="mt-8 flex justify-center">
+        <button id="copyChecklist"
+          class="rounded-xl border border-cashmere/40 bg-cashmere/10 px-6 py-3 font-bold text-leaf transition hover:bg-cashmere/20">
+          Copy Improvement Checklist
+        </button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Toast -->
+<div id="toast"
+  class="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-cashmere/40 bg-white/95 px-5 py-3 text-sm font-semibold text-leaf opacity-0 shadow-lg transition">
+</div>
+
+<script>
+const sampleResume = `SANA AFIA
+Student | Junior Web & Data Builder
+Email: sana@example.com | GitHub: github.com/sanaafia | LinkedIn: linkedin.com/in/sanaafia
+
+SKILLS
+HTML, CSS, JavaScript, Python, SQL, Git, Figma, Excel
+
+EXPERIENCE
+Campus Tech Club — Web Team Member
+- Worked on the club website and helped with small frontend changes.
+- Responsible for collecting feedback from students about events.
+
+Freelance Projects
+- Made a personal portfolio website using HTML and CSS.
+- Did data cleaning for a small student survey project in Excel.
+
+PROJECTS
+Student Event Dashboard
+- Built a simple dashboard to display event registrations and attendance.
+- Used JavaScript to make the page interactive.
+
+Education
+B.Tech, Computer Science — Expected 2028`;
+
+const sampleJD = `Product & Data Intern — Growth Team
+
+We are looking for a curious student or junior builder to support product experiments and data analysis.
+
+Responsibilities:
+- Analyze product usage and user feedback using SQL and Excel.
+- Build dashboards and reports using Power BI or Tableau.
+- Support A/B testing, funnel analysis, and retention analysis.
+- Collaborate with product managers and engineers.
+- Use Python for data cleaning and basic automation.
+- Understand KPIs, conversion rate, churn, and user engagement.
+
+Nice to have:
+- Familiarity with React, Git, Figma, and REST APIs.
+- Experience with Google Analytics or product analytics tools.`;
+
+const STOPWORDS = new Set(`a an the and or but if then than that this these those with without for from into onto about above below over under between among through during before after is are was were be been being do does did doing have has had having will would can could should may might must not no nor so very more most much many few own same other another each every all any some such only also just too s t don now here there when where why how what which who whom whose of in on at by to as it its it's we our ours you your yours they their theirs he she his her hers i me my mine us them him etc via using use used across per within upon while`.split(/\s+/));
+
+const WEAK_OPENERS = [
+  'worked on',
+  'helped with',
+  'responsible for',
+  'assisted in',
+  'assisted with',
+  'did',
+  'made',
+  'was involved in',
+  'participated in',
+  'involved in',
+  'handled'
+];
+
+const SECTION_KEYS = {
+  Experience: /\b(experience|employment|internship|work history)\b/i,
+  Projects: /\b(projects?|portfolio)\b/i,
+  Skills: /\b(skills?|technical skills)\b/i,
+  Education: /\b(education|academic|degree)\b/i
+};
+
+const $ = id => document.getElementById(id);
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function tokenize(text) {
+  return (text.toLowerCase().match(/[a-z][a-z0-9+#.\-]{1,}/g) || [])
+    .map(word => word.replace(/^[-.]+|[-.]+$/g, ''))
+    .filter(word => word.length > 2 && !STOPWORDS.has(word));
+}
+
+function extractJdKeywords(jd) {
+  const tokens = tokenize(jd);
+  const frequency = {};
+
+  tokens.forEach(token => {
+    frequency[token] = (frequency[token] || 0) + 1;
+  });
+
+  const technicalTerms = [
+    ...new Set(
+      (jd.toLowerCase().match(
+        /\b(sql|python|excel|power bi|tableau|react|git|figma|rest api|google analytics|a\/b testing|dashboards?|funnel analysis|retention analysis|product analytics|conversion rate|churn|kpis?|user engagement|data analysis|automation|user feedback)\b/g
+      ) || [])
+    )
+  ];
+
+  const frequentTerms = Object.entries(frequency)
+    .filter(([word, count]) => count > 1 && word.length > 2)
+    .sort((a, b) => b[1] - a[1])
+    .map(([word]) => word);
+
+  return [...new Set([...technicalTerms, ...frequentTerms])].slice(0, 45);
+}
+
+function getBullets(resume) {
+  return resume
+    .split(/\n+/)
+    .map(line => line.trim())
+    .filter(line =>
+      /^[-•*]/.test(line) ||
+      /\b(worked|helped|responsible|assisted|made|did|built|created|developed|designed|analyzed)\b/i.test(line)
+    )
+    .map(line => line.replace(/^[-•*]\s*/, ''));
+}
+
+function analyze() {
+  const resume = $('resumeInput').value.trim();
+  const jd = $('jdInput').value.trim();
+
+  if (!resume || !jd) {
+    toast('Paste both your resume and a job description first.');
+    return;
+  }
+
+  const resumeLower = resume.toLowerCase();
+  const keywords = extractJdKeywords(jd);
+
+  const matched = keywords.filter(keyword => resumeLower.includes(keyword));
+  const missing = keywords
+    .filter(keyword => !resumeLower.includes(keyword))
+    .slice(0, 12);
+
+  const score = keywords.length
+    ? Math.round((matched.length / keywords.length) * 100)
+    : 0;
+
+  renderScore(score);
+  renderKeywords(matched, missing);
+  renderWeakBullets(resume);
+  renderHealth(resume);
+
+  window.__lastAnalysis = { score, matched, missing, resume };
+
+  $('results').classList.remove('hidden');
+  $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderScore(score) {
+  const circumference = 2 * Math.PI * 65;
+  const offset = circumference * (1 - score / 100);
+  const ring = $('scoreRing');
+
+  ring.style.stroke =
+    score >= 70 ? '#8DB600' :
+    score >= 45 ? '#A65F69' :
+    '#75434A';
+
+  requestAnimationFrame(() => {
+    ring.style.strokeDashoffset = offset;
+  });
+
+  $('scoreText').textContent = `${score}%`;
+
+  $('scoreVerdict').textContent =
+    score >= 70
+      ? 'Strong alignment. Tighten the remaining gaps.'
+      : score >= 45
+        ? 'Decent base, but important keywords are missing.'
+        : 'Major mismatch. Add relevant evidence, tools, and outcomes.';
+}
+
+function renderKeywords(matched, missing) {
+  $('matchedKeywords').innerHTML = matched.length
+    ? matched.map(keyword =>
+        `<span class="pill border-cashmere/40 bg-cashmere/10 text-leaf">${escapeHtml(keyword)}</span>`
+      ).join('')
+    : '<span class="text-sm text-muted">No meaningful overlap detected.</span>';
+
+  $('missingKeywords').innerHTML = missing.length
+    ? missing.map(keyword =>
+        `<span class="pill border-merlot/50 bg-merlot/20 text-merlotLight">${escapeHtml(keyword)}</span>`
+      ).join('')
+    : '<span class="text-sm text-leaf">Excellent keyword coverage.</span>';
+}
+
+function renderWeakBullets(resume) {
+  const bullets = getBullets(resume);
+
+  const weakBullets = bullets
+    .map(text => {
+      const lower = text.toLowerCase();
+      const weakPhrase = WEAK_OPENERS.find(phrase => lower.includes(phrase));
+      const hasMetric = /(\d+(\.\d+)?\s*%|\$\s?\d|\b\d+\s*\+|\b\d+\s*x\b|\b\d+\b)/.test(text);
+
+      return { text, weakPhrase, hasMetric };
+    })
+    .filter(bullet => bullet.weakPhrase || !bullet.hasMetric)
+    .slice(0, 3);
+
+  $('weakBullets').innerHTML = weakBullets.length
+    ? weakBullets.map((bullet, index) => `
+        <div class="rounded-xl border border-line bg-white p-4">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-md bg-merlot/30 px-2 py-1 text-xs font-bold text-merlotLight">
+              FLAGGED #${index + 1}
+            </span>
+
+            ${bullet.weakPhrase
+              ? `<span class="rounded-md bg-merlot/30 px-2 py-1 text-xs font-bold text-merlotLight">
+                   Weak opener: “${escapeHtml(bullet.weakPhrase)}”
+                 </span>`
+              : ''}
+
+            ${!bullet.hasMetric
+              ? '<span class="rounded-md bg-merlot/30 px-2 py-1 text-xs font-bold text-merlotLight">No measurable result</span>'
+              : ''}
+          </div>
+
+          <p class="mt-3 text-sm text-mist">
+            “${escapeHtml(bullet.text)}”
+          </p>
+
+          <div class="mt-3 rounded-lg border border-cashmere/30 bg-cashmere/10 p-3">
+            <p class="text-xs font-bold uppercase tracking-wide text-leaf">
+              Upgrade Formula
+            </p>
+
+            <p class="mt-1 text-sm text-mist">
+              <span class="font-bold text-leaf">[Strong Action Verb]</span> +
+              <span class="font-bold text-merlotLight">[What You Built/Did]</span> +
+              <span class="font-bold text-leaf">[Measurable Result]</span>
+            </p>
+
+            <p class="mt-2 text-sm text-muted">
+              Example: “Built an event-registration dashboard that reduced manual tracking time by 30% for 120+ student sign-ups.”
+            </p>
+          </div>
+        </div>
+      `).join('')
+    : '<p class="text-sm text-leaf">No major weak-bullet patterns detected. Make sure your strongest accomplishments still include outcomes.</p>';
+}
+
+function renderHealth(resume) {
+  const words = resume.trim().split(/\s+/).filter(Boolean).length;
+  const hasLinks = /(github\.com|linkedin\.com|https?:\/\/|www\.)/i.test(resume);
+
+  const sectionChecks = Object.entries(SECTION_KEYS).map(([name, regex]) => ({
+    name,
+    pass: regex.test(resume)
+  }));
+
+  const checks = [
+    {
+      label: `Word count: ${words} words`,
+      pass: words >= 350 && words <= 650,
+      detail: 'Aim for 350–650 words.'
+    },
+    {
+      label: 'Portfolio / professional links',
+      pass: hasLinks,
+      detail: 'Add GitHub, LinkedIn, or a portfolio URL.'
+    },
+    ...sectionChecks.map(section => ({
+      label: `${section.name} section`,
+      pass: section.pass,
+      detail: section.pass ? 'Found.' : 'Add a clearly labeled section.'
+    }))
+  ];
+
+  $('healthChecks').innerHTML = checks.map(check => `
+    <div class="flex items-start gap-3 rounded-xl border ${
+      check.pass
+        ? 'border-cashmere/40 bg-cashmere/10'
+        : 'border-merlot/50 bg-merlot/15'
+    } p-4">
+      <span class="mt-0.5 text-lg">${check.pass ? '✅' : '⚠️'}</span>
+
+      <div>
+        <p class="font-semibold ${
+          check.pass ? 'text-leaf' : 'text-merlotLight'
+        }">
+          ${escapeHtml(check.label)}
+        </p>
+
+        <p class="text-sm text-muted">${escapeHtml(check.detail)}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+function copyChecklist() {
+  const analysis = window.__lastAnalysis;
+
+  if (!analysis) {
+    toast('Run the roast first.');
+    return;
+  }
+
+  const markdown = `# Resume Improvement Checklist
+
+## ATS Match Score
+${analysis.score}%
+
+## Missing High-Priority Keywords
+${analysis.missing.length
+  ? analysis.missing.map(keyword => `- [ ] Add evidence for **${keyword}**`).join('\n')
+  : '- [ ] No major keyword gaps detected.'}
+
+## Bullet Improvements
+${getBullets(analysis.resume)
+  .slice(0, 5)
+  .map(bullet =>
+    `- [ ] Rewrite: “${bullet}”\n  - Formula: [Strong Action Verb] + [What You Built/Did] + [Measurable Result]`
+  ).join('\n')}
+`;
+
+  navigator.clipboard.writeText(markdown)
+    .then(() => toast('Improvement checklist copied to clipboard.'))
+    .catch(() => toast('Clipboard access was blocked by the browser.'));
+}
+
+function toast(message) {
+  const toastElement = $('toast');
+  toastElement.textContent = message;
+  toastElement.style.opacity = '1';
+
+  setTimeout(() => {
+    toastElement.style.opacity = '0';
+  }, 2200);
+}
+
+$('analyze').addEventListener('click', analyze);
+$('copyChecklist').addEventListener('click', copyChecklist);
+
+$('loadSample').addEventListener('click', () => {
+  $('resumeInput').value = sampleResume;
+  $('jdInput').value = sampleJD;
+  analyze();
+});
+
+$('clearAll').addEventListener('click', () => {
+  $('resumeInput').value = '';
+  $('jdInput').value = '';
+  $('results').classList.add('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+$('resumeInput').value = sampleResume;
+$('jdInput').value = sampleJD;
+</script>
+</body>
+</html>
